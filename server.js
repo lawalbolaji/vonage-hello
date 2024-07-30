@@ -1,90 +1,72 @@
-"use strict";
+import express from "express";
+import { createServer } from "node:http";
+// import { Vonage } from "@vonage/server-sdk";
 
-const express = require("express");
-const bodyParser = require("body-parser");
 const app = express();
-const http = require("http");
+const server = createServer(app);
 
-app.use(bodyParser.json());
+// const vonage = new Vonage({})
 
-app.get("/webhooks/answer", (request, response) => {
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+app.get("/healthcheck", (_, res) => {
+    return res.send("ok");
+});
+
+app.post("/voice/answer", (req, res) => {
+    console.log(req.body)
+    
     const ncco = [
         {
             action: "talk",
-            text: "Thank you for calling Weather Bot! Where are you from?",
+            text: "Hello, I'm anwana, how can I help you today?",
         },
         {
             action: "input",
-            eventUrl: [`${request.protocol}://${request.get("host")}/webhooks/asr`],
+            eventUrl: [`${req.protocol}://${req.get("host")}/voice/ivr`],
             type: ["speech"],
-        },
-        {
-            action: "talk",
-            text: "Sorry, I don't hear you",
+            speech: {
+                endOnSilence: 2 /* 2 seconds pause to capture end of user query */,
+                context: [],
+                startTimeout: 10 /* ends call if user doesn't speak for 10s */,
+                maxDuration: 30 /* user can only talk for 30s */,
+                saveAudio: true /* we should see this as an event */,
+                sensitivity: 90,
+            },
         },
     ];
 
-    response.json(ncco);
+    return res.json(ncco);
 });
 
-app.post("/webhooks/events", (request, response) => {
+app.post("/voice/events", (req, res) => {
+    /* live events on call */
+    console.log(req.body);
+
+    return res.sendStatus(200);
+});
+
+/* interactive voice response */
+app.post("/voice/ivr", async (request, response) => {
     console.log(request.body);
-    response.sendStatus(200);
+
+    /* simulate 1 sec delay */
+    await new Promise((res) => {
+        setTimeout(res, 1_000);
+    });
+
+    const ncco = [
+        {
+            action: "talk",
+            text: "Thank you, I understand",
+        },
+    ];
+
+    return res.json(JSON.stringify(ncco));
 });
 
-
-app.post("/webhooks/asr", (request, response) => {
-    console.log(request.body);
-
-    if (request.body.speech.results) {
-        const city = request.body.speech.results[0].text;
-
-        http.get(
-            "http://api.weatherstack.com/current?access_key=WEATHERSTACK_API_KEY&query=" + city,
-            (weatherResponse) => {
-                let data = "";
-
-                weatherResponse.on("data", (chunk) => {
-                    data += chunk;
-                });
-
-                weatherResponse.on("end", () => {
-                    const weather = JSON.parse(data);
-
-                    console.log(weather);
-
-                    let location = weather.location.name;
-                    let description = weather.current.weather_descriptions[0];
-                    let temperature = weather.current.temperature;
-
-                    console.log("Location: " + location);
-                    console.log("Description: " + description);
-                    console.log("Temperature: " + temperature);
-
-                    const ncco = [
-                        {
-                            action: "talk",
-                            text: `Today in ${location}: it's ${description}, ${temperature}°C`,
-                        },
-                    ];
-
-                    response.json(ncco);
-                });
-            }
-        ).on("error", (err) => {
-            console.log("Error: " + err.message);
-        });
-    } else {
-        const ncco = [
-            {
-                action: "talk",
-                text: `Sorry I don't understand you.`,
-            },
-        ];
-
-        response.json(ncco);
-    }
+const port = 5516;
+server.listen(port, () => {
+    console.log(`Listening on port ${port}`);
 });
-
-const port = 3000;
-app.listen(port, () => console.log(`Listening on port ${port}`));
