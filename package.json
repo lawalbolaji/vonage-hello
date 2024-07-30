@@ -1,16 +1,21 @@
 {
-  "name": "vonage",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "body-parser": "^1.20.2",
-    "express": "^4.19.2"
-  }
+    "name": "vonage",
+    "version": "1.0.0",
+    "description": "anwana gsm integration with vonage",
+    "type": "module",
+    "main": "server.js",
+    "scripts": {
+        "dev": "nodemon",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "abdulrasheed.lawal@outlook.com",
+    "license": "ISC",
+    "dependencies": {
+        "@vonage/server-sdk": "^3.16.0",
+        "express": "^4.19.2"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.4"
+    }
 }
